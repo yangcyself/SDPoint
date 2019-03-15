@@ -9,7 +9,8 @@ import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torch.optim
-import torch.utils.data
+# import torch.utils.data
+import torch.utils.data as data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
@@ -161,7 +162,7 @@ def main():
 
 
     if args.distributed:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+        train_sampler = data.distributed.DistributedSampler(train_dataset)
     else:
         train_sampler = None
 
