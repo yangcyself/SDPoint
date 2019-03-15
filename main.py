@@ -166,8 +166,8 @@ def main():
 
     if args.evaluate:
         args.batch_size = args.val_batch_size
-
-    dataset=DataSet(torch_v=self.torch_version)
+	torch_version = 0.4
+    dataset=DataSet(torch_v=torch_version)
     train_loader = dataset.loader(train_path)
     val_loader = dataset.test_loader(test_path)
 
