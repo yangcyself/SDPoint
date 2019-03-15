@@ -60,6 +60,7 @@ parser.add_argument('--dist-backend', default='gloo', type=str,
                     help='distributed backend')
 parser.add_argument('--val-results-path', default='val_results.txt', type=str,
                     help='filename of the file for writing validation results')
+parser.add_argument("--torch_version", dest="torch_version", action="store", type=float, default=0.4)
 
 best_prec1 = 0
 
@@ -166,10 +167,10 @@ def main():
 
     if args.evaluate:
         args.batch_size = args.val_batch_size
-	torch_version = 0.4
-    dataset=DataSet(torch_v=torch_version)
-    train_loader = dataset.loader(train_path)
-    val_loader = dataset.test_loader(test_path)
+
+    dataset=DataSet(torch_v=args.torch_version)
+    train_loader = dataset.loader(args.train_path)
+    val_loader = dataset.test_loader(args.test_path)
 
     if args.evaluate:
         model.eval()
