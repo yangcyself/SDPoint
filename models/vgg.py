@@ -29,8 +29,8 @@ class VGG(nn.Module):
     def __init__(self, features, dspoints,num_classes=1000, init_weights=True):
         super(VGG, self).__init__()
         self.features = features
+        self.finalPooling = nn.AdaptiveAvgPool2d(1) #this makes the size of each channel equals to 1
         self.classifier = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1), #this makes the size of each channel equals to 1
             nn.Linear(512, 512), # changed from 512*7*7 to 512 accordingly
             nn.ReLU(True),
             nn.Dropout(),
@@ -56,6 +56,7 @@ class VGG(nn.Module):
         if self.downsampling_ratio < 1:
             x = F.adaptive_avg_pool2d(x, int(round(self.size_after_maxpool*self.downsampling_ratio)))
         x = self.features(x)
+        x = self.finalPooling(x)
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
