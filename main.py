@@ -29,8 +29,8 @@ parser.add_argument('--arch', '-a', metavar='ARCH', default='preresnet101',
                         ' | '.join(model_names) +
                         ' (default: preresnet101)')
 
-parser.add_argument("--train_path", type=str, default="./data")
-parser.add_argument("--test_path", type=str, default="./data")
+parser.add_argument("--train_path", type=str, default="~/dataset/vgg100")
+parser.add_argument("--test_path", type=str, default="~/dataset/vgg100")
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--epochs', default=115, type=int, metavar='N',
