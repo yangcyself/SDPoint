@@ -157,7 +157,7 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def stochastic_downsampling(self, blockID, ratio):
-        block_chosen = blockID is None and random.randint(-1, self.blockID) or blockID
+        block_chosen = blockID is None and random.randint(-1, self.blockID) or blockID #
         downsampling_ratios = ratio is None and [0.5, 0.75] or [ratio, ratio]
         if self.blockID == block_chosen:
             self.downsampling_ratio = downsampling_ratios[random.randint(0,1)]
