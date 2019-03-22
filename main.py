@@ -59,6 +59,8 @@ parser.add_argument('--dist-url', default='tcp://224.66.41.62:23456', type=str,
                     help='url used to set up distributed training')
 parser.add_argument('--dist-backend', default='gloo', type=str,
                     help='distributed backend')
+parser.add_argument('-m','--message', default='', type=str,
+                    help='the message used for naming the outputfile')
 parser.add_argument('--val-results-path', default='val_results.txt', type=str,
                     help='filename of the file for writing validation results')
 parser.add_argument("--torch_version", dest="torch_version", action="store", type=float, default=0.4)
@@ -322,7 +324,7 @@ def validate(train_loader, val_loader, model, criterion, blockID, ratio):
     return top1.avg, top5.avg
 
 
-def save_checkpoint(state, filename='checkpoint.pth.tar'):
+def save_checkpoint(state, filename='{}_{}.checkpoint.pth.tar'.format(args.arch,args.message)):
     torch.save(state, filename)
 
 
