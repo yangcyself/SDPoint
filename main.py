@@ -67,6 +67,7 @@ parser.add_argument("--torch_version", dest="torch_version", action="store", typ
 
 best_prec1 = 0
 
+args = parser.parse_args()
 
 class DataSet:
     def __init__(self, torch_v=0.4):
@@ -118,7 +119,7 @@ class DataSet:
 
 def main():
     global args, best_prec1
-    args = parser.parse_args()
+    # args = parser.parse_args()
 
     args.distributed = args.world_size > 1
 
