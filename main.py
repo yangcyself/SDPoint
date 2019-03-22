@@ -128,7 +128,7 @@ def main():
 
     # create model
     print("=> creating model '{}'".format(args.arch))
-    model = models.__dict__[args.arch]()
+    model = models.__dict__[args.arch](num_classes=100)
 
     if not args.distributed:
         model = torch.nn.DataParallel(model).cuda()
