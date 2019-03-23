@@ -53,6 +53,8 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
+parser.add_argument('-o', '--nodownsample', dest='nodownsample', action='store_true',
+                    help='turn off the down sampling function of the model')
 parser.add_argument('--world-size', default=1, type=int,
                     help='number of distributed processes')
 parser.add_argument('--dist-url', default='tcp://224.66.41.62:23456', type=str,
@@ -129,7 +131,7 @@ def main():
 
     # create model
     print("=> creating model '{}'".format(args.arch))
-    model = models.__dict__[args.arch](num_classes=100)
+    model = models.__dict__[args.arch](num_classes=100,nodownsample = args.nodownsample)
 
     if not args.distributed:
         model = torch.nn.DataParallel(model).cuda()
@@ -180,15 +182,24 @@ def main():
         model.eval()
         val_results_file = open(args.val_results_path, 'w')
         val_results_file.write('blockID\tratio\tflops\ttop1-acc\ttop5-acc\t\n')
-        for i in [-1] + [model.module.blockID] + list(range(model.module.blockID)):
-            for r in [0.5, 0.75]:
-                model_flops = flops.calculate(model, i, r)
-                top1, top5 = validate(train_loader, val_loader, model, criterion, i, r)
-                val_results_file.write('{0}\t{1}\t{2}\t{top1:.3f}\t{top5:.3f}\n'.format(
-                                        i if i>-1 else 'nil', r if i>-1 else 'nil',
-                                        model_flops, top1=top1, top5=top5))
-                if i == -1:
-                    break
+        if(not args.nodownsample):
+            for i in [-1] + [model.module.blockID] + list(range(model.module.blockID)):
+                for r in [0.5, 0.75]:
+                    model_flops = flops.calculate(model, i, r)
+                    top1, top5 = validate(train_loader, val_loader, model, criterion, i, r)
+                    val_results_file.write('{0}\t{1}\t{2}\t{top1:.3f}\t{top5:.3f}\n'.format(
+                                            i if i>-1 else 'nil', r if i>-1 else 'nil',
+                                            model_flops, top1=top1, top5=top5))
+                    if i == -1:
+                        break
+        else:
+            i = -1
+            model_flops = flops.calculate(model, i, 1)
+            top1, top5 = validate(train_loader, val_loader, model, criterion, i, r)
+            val_results_file.write('{0}\t{1}\t{2}\t{top1:.3f}\t{top5:.3f}\n'.format(
+                                    i if i>-1 else 'nil', r if i>-1 else 'nil',
+                                    model_flops, top1=top1, top5=top5))
+
         val_results_file.close()
         return
 
