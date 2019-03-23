@@ -60,12 +60,12 @@ class Bottleneck(nn.Module):
 
 class ResNeXt(nn.Module):
 
-	def __init__(self, block, layers, base_width=4, cardinality=32, num_classes=1000):
+	def __init__(self, block, layers, base_width=4, cardinality=32, num_classes=1000,nodownsample = False):
 		self.cardinality = cardinality
 		self.base_width = base_width
 		self.inplanes = 64
 		super(ResNeXt, self).__init__()
-
+		self.nodownsample = nodownsample
 		global blockID
 		blockID = 0
 
@@ -113,6 +113,8 @@ class ResNeXt(nn.Module):
 		return nn.Sequential(*layers)
 
 	def stochastic_downsampling(self, blockID, ratio):
+		if self.nodownsample:
+			return
 		block_chosen = blockID is None and random.randint(-1, self.blockID) or blockID
 		downsampling_ratios = ratio is None and [0.5, 0.75] or [ratio, ratio]
 		if self.blockID == block_chosen:
