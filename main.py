@@ -195,7 +195,7 @@ def main():
         else:
             i = -1
             model_flops = flops.calculate(model, i, 1)
-            top1, top5 = validate(train_loader, val_loader, model, criterion, i, r)
+            top1, top5 = validate(train_loader, val_loader, model, criterion, i, 1)
             val_results_file.write('{0}\t{1}\t{2}\t{top1:.3f}\t{top5:.3f}\n'.format(
                                     i if i>-1 else 'nil', r if i>-1 else 'nil',
                                     model_flops, top1=top1, top5=top5))
