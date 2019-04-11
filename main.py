@@ -17,6 +17,7 @@ import torchvision.datasets as datasets
 from torch.utils.data.sampler import SubsetRandomSampler
 import models
 import utils.flops as flops
+from predictor import Predictor
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -334,6 +335,45 @@ def validate(train_loader, val_loader, model, criterion, blockID, ratio):
               .format(top1=top1, top5=top5))
 
     return top1.avg, top5.avg
+
+
+def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
+    predictor = Predictor(model.allblocks[blockID].inplanes)
+
+    optimizer = torch.optim.SGD(predictor.parameters(),
+                                0.1, momentum=0.9,
+                                weight_decay=1e-4)
+
+    stor = []
+    def hook(m,inp,outp,stor):
+        stor.append(inp)
+    hookHandle = model.allblocks[blockID].register_forward_hook(lambda m,i,o: hook(m,i,o,stor))
+    model.eval()
+    predictor.train()
+    for i, (input, target) in enumerate(val_loader):
+        feainput = input.cuda()
+        featarget = target.cuda(non_blocking=True)
+
+        # compute output
+        dsoutput = model(feainput, blockID=blockID, ratio=ratio)
+        dsloss = criterion(dsoutput, featarget)
+
+        orioutput = model(feainput, blockID=None, ratio=None,downSample = False)
+        oriloss = criterion(orioutput,featarget)
+
+        target = oriloss/dsloss
+        input = stor[0]
+        # input = 
+        pred = predictor(input)
+
+        loss = (pred-target)**2
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        print(i,loss)
+    hookHandle.remove()
+
 
 
 def save_checkpoint(state, filename='{}_{}.checkpoint.pth.tar'.format(args.arch,args.message)):

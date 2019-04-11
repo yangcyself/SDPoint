@@ -1,3 +1,4 @@
+# -^- coding:utf-8 -^-
 import torch.nn as nn
 import torch.nn.functional as F
 import math
@@ -25,13 +26,17 @@ class Bottleneck(nn.Module):
 		self.relu = nn.ReLU(inplace=True)
 		self.downsample = downsample
 		self.stride = stride
-
+		self.inplanes = inplanes
 		global blockID
 		self.blockID = blockID
 		blockID += 1
 		self.downsampling_ratio = 1.
 
 	def forward(self, x):
+    		
+		if self.downsampling_ratio < 1:
+			x = F.adaptive_avg_pool2d(x, int(round(x.size(2)*self.downsampling_ratio)))
+
 		residual = x
 
 		out = self.conv1(x)
@@ -49,10 +54,6 @@ class Bottleneck(nn.Module):
 			residual = self.downsample(x)
 
 		out += residual
-
-		if self.downsampling_ratio < 1:
-			out = F.adaptive_avg_pool2d(out, int(round(out.size(2)*self.downsampling_ratio)))
-
 		out = self.relu(out)
 
 		return out
@@ -67,13 +68,14 @@ class ResNeXt(nn.Module):
 		super(ResNeXt, self).__init__()
 		self.nodownsample = nodownsample
 		global blockID
-		blockID = 0
+		blockID = 1
 
-		self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
+		self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, #没明白这个conv1是干啥用的
 							   bias=False)
 		self.bn1 = nn.BatchNorm2d(64)
 		self.relu = nn.ReLU(inplace=True)
 		self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+		self.allblocks=[None] # 
 		self.layer1 = self._make_layer(block, 64, layers[0])
 		self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
 		self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
@@ -106,9 +108,13 @@ class ResNeXt(nn.Module):
 
 		layers = []
 		layers.append(block(self.inplanes, planes, self.base_width, self.cardinality, stride, downsample))
+		self.allblocks.append(layers[-1]) # add blocks according to the blockID
+
 		self.inplanes = planes * block.expansion
 		for i in range(1, blocks):
 			layers.append(block(self.inplanes, planes, self.base_width, self.cardinality))
+			self.allblocks.append(layers[-1])
+
 
 		return nn.Sequential(*layers)
 
@@ -128,12 +134,14 @@ class ResNeXt(nn.Module):
 				else:
 					m.downsampling_ratio = 1.
 
-	def forward(self, x, blockID=None, ratio=None):
-		self.stochastic_downsampling(blockID, ratio)
+	def forward(self, x, blockID=None, ratio=None,downSample = True):
+		if(downSample):
+			self.stochastic_downsampling(blockID, ratio)
 
 		x = self.conv1(x)
 		x = self.bn1(x)
 		x = self.relu(x)
+
 		if self.downsampling_ratio < 1:
 			if self.size_after_maxpool is None:
 				self.size_after_maxpool = self.maxpool(x).size(2)
@@ -149,9 +157,24 @@ class ResNeXt(nn.Module):
 		x = self.avgpool(x)
 		x = x.view(x.size(0), -1)
 		x = self.fc(x)
-
 		return x
+	
 
+	def step(self, x, blockID=0, ratio = 1 ):
+		if(blockID==0): # the first step 
+			x = self.conv1(x)
+			x = self.bn1(x)
+			x = self.relu(x)
+			return x
+		if(blockID==self.blockID):
+			x = self.avgpool(x)
+			x = x.view(x.size(0), -1)
+			x = self.fc(x)
+			return x
+		self.allblocks[blockID].downsampling_ratio = ratio
+		return self.allblocks[blockID].forward(x)
+
+    		
 
 def resnext50(pretrained=False, **kwargs):
 	"""Constructs a ResNeXt-50 model.
