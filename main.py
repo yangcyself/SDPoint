@@ -179,6 +179,9 @@ def main():
     train_loader = dataset.loader(args.train_path)
     val_loader = dataset.test_loader(args.test_path)
 
+    trainPredictor(train_loader,val_loader,model,criterion,10,0.75)
+    return 
+
     if args.evaluate:
         model.eval()
         val_results_file = open(args.val_results_path, 'w')
@@ -338,7 +341,7 @@ def validate(train_loader, val_loader, model, criterion, blockID, ratio):
 
 
 def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
-    predictor = Predictor(model.allblocks[blockID].inplanes)
+    predictor = Predictor(model.module.allblocks[blockID].inplanes)
 
     optimizer = torch.optim.SGD(predictor.parameters(),
                                 0.1, momentum=0.9,
@@ -347,7 +350,7 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
     stor = []
     def hook(m,inp,outp,stor):
         stor.append(inp)
-    hookHandle = model.allblocks[blockID].register_forward_hook(lambda m,i,o: hook(m,i,o,stor))
+    hookHandle = model.module.allblocks[blockID].register_forward_hook(lambda m,i,o: hook(m,i,o,stor))
     model.eval()
     predictor.train()
     for i, (input, target) in enumerate(val_loader):
