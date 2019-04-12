@@ -24,8 +24,8 @@ class Predictor(nn.Module):
     def forward(self,x):
         x = self.relu(self.conv1(x))
         x = self.relu(self.conv2(x))
-        x = x.view(x.size(0), -1)
         x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
 

@@ -342,7 +342,7 @@ def validate(train_loader, val_loader, model, criterion, blockID, ratio):
 
 def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
     predictor = Predictor(model.module.allblocks[blockID].inplanes)
-
+    predictor = predictor.cuda()
     optimizer = torch.optim.SGD(predictor.parameters(),
                                 0.1, momentum=0.9,
                                 weight_decay=1e-4)
