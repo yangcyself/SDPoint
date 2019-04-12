@@ -353,9 +353,9 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
     hookHandle = model.module.allblocks[blockID].register_forward_hook(lambda m,i,o: hook(m,i,o,stor))
     model.eval()
     predictor.train()
-    for i, (input, target) in enumerate(val_loader):
-        feainput = input.cuda()
-        featarget = target.cuda(non_blocking=True)
+    for i, (feainput, featarget) in enumerate(val_loader):
+        feainput = feainput.cuda()
+        featarget = featarget.cuda(non_blocking=True)
 
         # compute output
         dsoutput = model(feainput, blockID=blockID, ratio=ratio)
@@ -365,8 +365,9 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
         oriloss = criterion(orioutput,featarget)
 
         target = oriloss/dsloss
-        input = stor[0]
-        # input = 
+        target = target.cuda()
+        input = stor[0][0]
+        input = input.cuda()
         pred = predictor(input)
 
         loss = (pred-target)**2
