@@ -368,7 +368,7 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
 
         target = oriloss/dsloss
         target = target.cuda()
-        input = stor[0][0]
+        input = stor.pop()[0]
         input = input.cuda()
         pred = predictor(input)
 
