@@ -372,7 +372,7 @@ def trainPredictor(val_loader, model,criterion,blockID, ratio):
         input = input.cuda()
         pred = predictor(input)
         pred = pred.view((-1))
-        print(pred,target)
+        #print(pred,target)
         loss = nn.functional.mse_loss(pred,target)
         losses.update(loss.item(), input.size(0))
 
