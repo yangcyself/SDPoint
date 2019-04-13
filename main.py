@@ -179,7 +179,7 @@ def main():
     train_loader = dataset.loader(args.train_path)
     val_loader = dataset.test_loader(args.test_path)
 
-    trainPredictor(train_loader,val_loader,model,criterion,10,0.75)
+    trainPredictor(val_loader,model,criterion,10,0.75)
     return 
 
     if args.evaluate:
@@ -340,7 +340,7 @@ def validate(train_loader, val_loader, model, criterion, blockID, ratio):
     return top1.avg, top5.avg
 
 
-def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
+def trainPredictor(val_loader, model,criterion,blockID, ratio):
     predictor = Predictor(model.module.allblocks[blockID].inplanes)
     predictor = predictor.cuda()
     optimizer = torch.optim.SGD(predictor.parameters(),
@@ -348,6 +348,8 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
                                 weight_decay=1e-4)
 
     stor = []
+    losses = AverageMeter()
+
     def hook(m,inp,outp,stor):
         stor.append(inp)
     hookHandle = model.module.allblocks[blockID].register_forward_hook(lambda m,i,o: hook(m,i,o,stor))
@@ -358,12 +360,10 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
         featarget = featarget.cuda(non_blocking=True)
 
         # compute output
-        dsoutput = model(feainput, blockID=blockID, ratio=ratio)#.detach()
-        #dsloss = criterion(dsoutput, featarget)
+        dsoutput = model(feainput, blockID=blockID, ratio=ratio)
         dsloss = nn.functional.cross_entropy(dsoutput, featarget,reduction = 'none')
 
         orioutput = model(feainput, blockID=None, ratio=None,downSample = False)#.detach()
-        #oriloss = criterion(orioutput,featarget)
         oriloss = nn.functional.cross_entropy(orioutput, featarget,reduction = 'none')
 
         target = oriloss/dsloss
@@ -371,22 +371,20 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
         input = stor.pop()[0]
         input = input.cuda()
         pred = predictor(input)
-
-        print(pred.shape)
-        print(oriloss.shape,dsloss.shape)
-        print(target.shape)
         loss = nn.functional.mse_loss(pred,target)
-        optimizer.zero_grad()
-        # loss = nn.man (pred-target)**2
-        # loss.
-        loss.backward()
-        #https://discuss.pytorch.org/t/loss-backward-raises-error-grad-can-be-implicitly-created-only-for-scalar-outputs/12152
-            #this is why this line is added
-        # loss.sum().backward() 
+        losses.update(loss.item(), input.size(0))
 
+        optimizer.zero_grad()
+        loss.backward()
         optimizer.step()
-        print(i,loss)
-        print("oneEPOCH")
+        # print(i,loss)
+        # print("oneEPOCH")
+        if i % args.print_freq == 0:
+            print('Epoch: [{0}/{1}]\t'
+                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                  .format(
+                   i, len(val_loader),
+                   loss=losses))
     hookHandle.remove()
 
 
