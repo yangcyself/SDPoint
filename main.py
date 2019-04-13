@@ -370,14 +370,14 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
         input = input.cuda()
         pred = predictor(input)
 
-        loss = (pred-target)**2
-
+        loss = nn.functional.mse_loss(pred,target)
         optimizer.zero_grad()
+        # loss = nn.man (pred-target)**2
         # loss.
-        # loss.backward()
+        loss.backward()
         #https://discuss.pytorch.org/t/loss-backward-raises-error-grad-can-be-implicitly-created-only-for-scalar-outputs/12152
             #this is why this line is added
-        loss.sum().backward() 
+        # loss.sum().backward() 
 
         optimizer.step()
         print(i,loss)
