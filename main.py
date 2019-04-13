@@ -373,7 +373,12 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
         loss = (pred-target)**2
 
         optimizer.zero_grad()
-        loss.backward()
+        # loss.
+        # loss.backward()
+        #https://discuss.pytorch.org/t/loss-backward-raises-error-grad-can-be-implicitly-created-only-for-scalar-outputs/12152
+            #this is why this line is added
+        loss.sum().backward() 
+
         optimizer.step()
         print(i,loss)
     hookHandle.remove()
