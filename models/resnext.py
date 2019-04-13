@@ -138,7 +138,7 @@ class ResNeXt(nn.Module):
 		if(downSample):
 			self.stochastic_downsampling(blockID, ratio)
 		else:
-	 		self.downsampling_ratio = 1.
+			self.downsampling_ratio = 1.
 			for m in self.modules():
 				m.downsampling_ratio = 1.
 		x = self.conv1(x)
