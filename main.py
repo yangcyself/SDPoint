@@ -358,11 +358,13 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
         featarget = featarget.cuda(non_blocking=True)
 
         # compute output
-        dsoutput = model(feainput, blockID=blockID, ratio=ratio).detach()
-        dsloss = criterion(dsoutput, featarget)
+        dsoutput = model(feainput, blockID=blockID, ratio=ratio)#.detach()
+        #dsloss = criterion(dsoutput, featarget)
+        dsloss = nn.functional.cross_entropy(dsoutput, featarget,reduction = 'none')
 
-        orioutput = model(feainput, blockID=None, ratio=None,downSample = False).detach()
-        oriloss = criterion(orioutput,featarget)
+        orioutput = model(feainput, blockID=None, ratio=None,downSample = False)#.detach()
+        #oriloss = criterion(orioutput,featarget)
+        oriloss = nn.functional.cross_entropy(orioutput, featarget,reduction = 'none')
 
         target = oriloss/dsloss
         target = target.cuda()
@@ -370,6 +372,9 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
         input = input.cuda()
         pred = predictor(input)
 
+        print(pred.shape)
+        print(oriloss.shape,dsloss.shape)
+        print(target.shape)
         loss = nn.functional.mse_loss(pred,target)
         optimizer.zero_grad()
         # loss = nn.man (pred-target)**2
@@ -381,6 +386,7 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
 
         optimizer.step()
         print(i,loss)
+        print("oneEPOCH")
     hookHandle.remove()
 
 
