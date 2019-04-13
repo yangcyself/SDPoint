@@ -366,11 +366,13 @@ def trainPredictor(val_loader, model,criterion,blockID, ratio):
         orioutput = model(feainput, blockID=None, ratio=None,downSample = False)#.detach()
         oriloss = nn.functional.cross_entropy(orioutput, featarget,reduction = 'none')
 
-        target = oriloss/dsloss
+        target = oriloss-dsloss
         target = target.cuda()
         input = stor.pop()[0]
         input = input.cuda()
         pred = predictor(input)
+        pred = pred.view((-1))
+        print(pred,target)
         loss = nn.functional.mse_loss(pred,target)
         losses.update(loss.item(), input.size(0))
 
