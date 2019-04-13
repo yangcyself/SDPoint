@@ -358,10 +358,10 @@ def trainPredictor(train_loader, val_loader, model,criterion,blockID, ratio):
         featarget = featarget.cuda(non_blocking=True)
 
         # compute output
-        dsoutput = model(feainput, blockID=blockID, ratio=ratio)
+        dsoutput = model(feainput, blockID=blockID, ratio=ratio).detach()
         dsloss = criterion(dsoutput, featarget)
 
-        orioutput = model(feainput, blockID=None, ratio=None,downSample = False)
+        orioutput = model(feainput, blockID=None, ratio=None,downSample = False).detach()
         oriloss = criterion(orioutput,featarget)
 
         target = oriloss/dsloss
