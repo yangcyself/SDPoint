@@ -137,7 +137,10 @@ class ResNeXt(nn.Module):
 	def forward(self, x, blockID=None, ratio=None,downSample = True):
 		if(downSample):
 			self.stochastic_downsampling(blockID, ratio)
-
+		else:
+	 		self.downsampling_ratio = 1.
+			for m in self.modules():
+				m.downsampling_ratio = 1.
 		x = self.conv1(x)
 		x = self.bn1(x)
 		x = self.relu(x)
