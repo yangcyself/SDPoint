@@ -4,3 +4,6 @@ ddpg/__pycache__/*
 *.txt
 models/__pycache__/*
 utils/__pycache__/*
+*.ipynb
+*.pth.tar*
+__pycache__/*
