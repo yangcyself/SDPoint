@@ -16,6 +16,7 @@ class Bottleneck(nn.Module):
 		super(Bottleneck, self).__init__()
 		D = int(math.floor(planes * (base_width / 64)))
 		C = cardinality
+		self.shape = (inplanes, D*C,planes)
 		self.conv1 = nn.Conv2d(inplanes, D*C, kernel_size=1, bias=False)
 		self.bn1 = nn.BatchNorm2d(D*C)
 		self.conv2 = nn.Conv2d(D*C, D*C, kernel_size=3, stride=stride,
@@ -75,7 +76,7 @@ class ResNeXt(nn.Module):
 		self.bn1 = nn.BatchNorm2d(64)
 		self.relu = nn.ReLU(inplace=True)
 		self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-		self.allblocks=[None] # 
+		self.allblocks=[] # 
 		self.layer1 = self._make_layer(block, 64, layers[0])
 		self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
 		self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
@@ -134,6 +135,12 @@ class ResNeXt(nn.Module):
 				else:
 					m.downsampling_ratio = 1.
 
+
+	def setDSRate(self,rate):
+		for b,r in zip(self.allblocks,rate):
+			b.downsampling_ratio = r
+		
+
 	def forward(self, x, blockID=None, ratio=None,downSample = True):
 		if(downSample):
 			self.stochastic_downsampling(blockID, ratio)
@@ -163,19 +170,19 @@ class ResNeXt(nn.Module):
 		return x
 	
 
-	def step(self, x, blockID=0, ratio = 1 ):
-		if(blockID==0): # the first step 
-			x = self.conv1(x)
-			x = self.bn1(x)
-			x = self.relu(x)
-			return x
-		if(blockID==self.blockID):
-			x = self.avgpool(x)
-			x = x.view(x.size(0), -1)
-			x = self.fc(x)
-			return x
-		self.allblocks[blockID].downsampling_ratio = ratio
-		return self.allblocks[blockID].forward(x)
+	# def step(self, x, blockID=0, ratio = 1 ):
+	# 	if(blockID==0): # the first step 
+	# 		x = self.conv1(x)
+	# 		x = self.bn1(x)
+	# 		x = self.relu(x)
+	# 		return x
+	# 	if(blockID==self.blockID):
+	# 		x = self.avgpool(x)
+	# 		x = x.view(x.size(0), -1)
+	# 		x = self.fc(x)
+	# 		return x
+	# 	self.allblocks[blockID].downsampling_ratio = ratio
+	# 	return self.allblocks[blockID].forward(x)
 
     		
 
