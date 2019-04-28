@@ -9,7 +9,7 @@ An Agent that find a number for each layer:
 
 from utils.rlmodels import build_q_func,mlp
 import utils.tf_util as U
-from utils.tf_util import get_session
+from utils.tf_util import get_session,adjust_shape
 import tensorflow as tf
 import os
 from utils.replayBuffer import PrioritizedReplayBuffer, ReplayBuffer
@@ -443,11 +443,14 @@ class ObservationInput:
         """
         inpt = tf.placeholder(shape=(None,) + (observation_space,), dtype=tf.int32, name=name)
         self.processed_inpt = tf.to_float(inpt)
-
+        self._placeholder = inpt
         self.name = name
 
     def get(self):
         return self.processed_inpt
+    
+    def make_feed_dict(self, data):
+        return {self._placeholder: adjust_shape(self._placeholder, data)}
 
 class ActWrapper(object):
     def __init__(self, act, act_params):
@@ -546,7 +549,7 @@ class Agent:
         def make_obs_ph(name):
             return ObservationInput(observation_space, name=name)
         network_kwargs = {}
-        self.q_func = build_q_func(mlp, **network_kwargs)
+        self.q_func = build_q_func( **network_kwargs)
         act, self.train, self.update_target, self.debug = build_train(
             make_obs_ph=make_obs_ph,
             q_func=self.q_func,
