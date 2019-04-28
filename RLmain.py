@@ -18,20 +18,40 @@ import torchvision.datasets as datasets
 from torch.utils.data.sampler import SubsetRandomSampler
 import models
 import utils.flops as flops
-from agent import Agent
+from agent import Agent,LinearSchedule
+import numpy as np
+from utils import logger
+
+def accuracy(output, target, topk=(1,)):
+    """Computes the precision@k for the specified values of k"""
+    with torch.no_grad():
+        maxk = max(topk)
+        batch_size = target.size(0)
+
+        _, pred = output.topk(maxk, 1, True, True)
+        pred = pred.t()
+        correct = pred.eq(target.view(1, -1).expand_as(pred))
+
+        res = []
+        for k in topk:
+            correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
+            res.append(correct_k.mul_(100.0 / batch_size))
+        return res
 
 
 class dsENV:
     """
     The API contains the init and step and validation, which gives a total reward
     """
-    def __init__(self,model,val_loader,criterion):
+    def __init__(self,model,val_loader,criterion,
+                print_freq=10):
         self.dsrate = []
         self.model = model
         self.currentShape=100
         self.val_loader = val_loader
         self.criterion = criterion
         self.layers = self.getshape()
+        self.print_freq = print_freq
 
     def flops(self):
         return flops.calculate(self.model,stochastic = False)
@@ -49,8 +69,8 @@ class dsENV:
             the current layer
             the current featuremap shape
         """
-        cl = len(dsrate)
-        return np.array([cl,*(self.layers(cl)),self.currentShape])
+        cl = len(self.dsrate)
+        return np.array([cl,*(self.layers[cl]),self.currentShape])
 
     def reset(self):
         """
@@ -58,7 +78,7 @@ class dsENV:
         """
         self.dsrate = []
         self.currentShape=100
-        return getState()
+        return self.getState()
     def step(self,action):
         """
         returns state, done
@@ -66,7 +86,7 @@ class dsENV:
         self.dsrate.append(action)
         self.currentShape *= action
         done = len(self.dsrate) ==len(self.layers)
-        return self.etState(),done
+        return self.getState(),done
         
     def validation(self):
         batch_time = AverageMeter()
@@ -83,8 +103,8 @@ class dsENV:
                 target = target.cuda(non_blocking=True)
 
                 # compute output
-                output = model(input, blockID=blockID, ratio=ratio)
-                loss = self.scriterion(output, target)
+                output = model(input, stochastic = False)
+                loss = self.criterion(output, target)
 
                 # measure accuracy and record loss
                 prec1, prec5 = accuracy(output, target, topk=(1, 5))
@@ -96,7 +116,7 @@ class dsENV:
                 batch_time.update(time.time() - end)
                 end = time.time()
 
-                if i % args.print_freq == 0:
+                if i % self.print_freq == 0:
                     print('Test: [{0}/{1}]\t'
                         'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                         'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
@@ -138,6 +158,8 @@ class AverageMeter(object):
 
 
 def train(
+    agent,
+    env,
     seed=None,
     total_timesteps=100000,
     exploration_fraction=0.1,
@@ -330,6 +352,8 @@ if __name__ == "__main__":
     val_loader = dataset.test_loader(args.test_path)
 
     env = dsENV(model,val_loader,criterion)
+    total_timesteps = 100000
     agent = Agent(
         2,#action_space
+        total_timesteps = total_timesteps
         )

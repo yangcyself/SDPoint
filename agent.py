@@ -9,7 +9,15 @@ An Agent that find a number for each layer:
 
 from utils.rlmodels import build_q_func,mlp
 import utils.tf_util as U
+from utils.tf_util import get_session
 import tensorflow as tf
+import os
+from utils.replayBuffer import PrioritizedReplayBuffer, ReplayBuffer
+import numpy as np
+from utils import logger
+import zipfile
+import cloudpickle
+import tempfile
 
 def scope_vars(scope, trainable_only=False):
     """
@@ -433,11 +441,68 @@ class ObservationInput:
         name: str
                 tensorflow name of the underlying placeholder
         """
-        self.processed_inpt = tf.placeholder(shape=(None,) + (observation_space,), dtype=tf.int32, name=name)
+        inpt = tf.placeholder(shape=(None,) + (observation_space,), dtype=tf.int32, name=name)
+        self.processed_inpt = tf.to_float(inpt)
+
         self.name = name
 
     def get(self):
         return self.processed_inpt
+
+class ActWrapper(object):
+    def __init__(self, act, act_params):
+        self._act = act
+        self._act_params = act_params
+        self.initial_state = None
+
+    @staticmethod
+    def load_act(path):
+        with open(path, "rb") as f:
+            model_data, act_params = cloudpickle.load(f)
+        act = build_act(**act_params)
+        sess = tf.Session()
+        sess.__enter__()
+        with tempfile.TemporaryDirectory() as td:
+            arc_path = os.path.join(td, "packed.zip")
+            with open(arc_path, "wb") as f:
+                f.write(model_data)
+
+            zipfile.ZipFile(arc_path, 'r', zipfile.ZIP_DEFLATED).extractall(td)
+            load_variables(os.path.join(td, "model"))
+
+        return ActWrapper(act, act_params)
+
+    def __call__(self, *args, **kwargs):
+        return self._act(*args, **kwargs)
+
+    def step(self, observation, **kwargs):
+        # DQN doesn't use RNNs so we ignore states and masks
+        kwargs.pop('S', None)
+        kwargs.pop('M', None)
+        return self._act([observation], **kwargs), None, None, None
+
+    def save_act(self, path=None):
+        """Save model to a pickle located at `path`"""
+        if path is None:
+            path = os.path.join(logger.get_dir(), "model.pkl")
+
+        with tempfile.TemporaryDirectory() as td:
+            save_variables(os.path.join(td, "model"))
+            arc_name = os.path.join(td, "packed.zip")
+            with zipfile.ZipFile(arc_name, 'w') as zipf:
+                for root, dirs, files in os.walk(td):
+                    for fname in files:
+                        file_path = os.path.join(root, fname)
+                        if file_path != arc_name:
+                            zipf.write(file_path, os.path.relpath(file_path, td))
+            with open(arc_name, "rb") as f:
+                model_data = f.read()
+        with open(path, "wb") as f:
+            cloudpickle.dump((model_data, self._act_params), f)
+
+    def save(self, path):
+        save_variables(path)
+
 
 class Agent:
     def __init__(self,
@@ -446,7 +511,7 @@ class Agent:
         checkpoint_path=None,
         load_path=None,
         buffer_size=50000,
-
+        total_timesteps = 100000,
         batch_size=32,
         print_freq=100,
         checkpoint_freq=10000,
@@ -493,7 +558,7 @@ class Agent:
 
         act_params = {
             'make_obs_ph': make_obs_ph,
-            'q_func': q_func,
+            'q_func': self.q_func,
             'num_actions': action_space,
         }
 
@@ -524,16 +589,15 @@ class Agent:
 
             if tf.train.latest_checkpoint(td) is not None:
                 load_variables(self.model_file)
-                logger.log('Loaded model from {}'.format(model_file))
+                logger.log('Loaded model from {}'.format(self.model_file))
                 model_saved = True
             elif load_path is not None:
                 load_variables(load_path)
                 logger.log('Loaded model from {}'.format(load_path))
 
-    def learn_step(trajetory,final_r,t_):
+    def learn_step(self,trajetory,final_r,t_):
         # Create all the functions necessary to train the model
         sess = get_session()
-        set_global_seeds(seed)
 
         # Store transition in the replay buffer.
         for obs, action, new_obs, done in trajetory:
@@ -553,7 +617,7 @@ class Agent:
                     new_priorities = np.abs(td_errors) + self.prioritized_replay_eps
                     self.replay_buffer.update_priorities(batch_idxes, new_priorities)
 
-            if t > learning_starts and t % target_network_update_freq == 0:
+            if t > self.learning_starts and t % self.target_network_update_freq == 0:
                 # Update target network periodically.
                 self.update_target()
 

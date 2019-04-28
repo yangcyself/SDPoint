@@ -363,7 +363,7 @@ def trainPredictor(val_loader, model,criterion,blockID, ratio):
         dsoutput = model(feainput, blockID=blockID, ratio=ratio)
         dsloss = nn.functional.cross_entropy(dsoutput, featarget,reduction = 'none')
 
-        orioutput = model(feainput, blockID=None, ratio=None,downSample = False)#.detach()
+        orioutput = model(feainput, blockID=None, ratio=None,stochastic = False)#.detach()
         oriloss = nn.functional.cross_entropy(orioutput, featarget,reduction = 'none')
 
         target = oriloss-dsloss
