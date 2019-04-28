@@ -38,3 +38,19 @@ The different SDPoint instances are evaluated one by one. For each instance, the
 ```
 python main.py -a resnext101 --resume checkpoint.pth.tar --evaluate [imagenet-folder with train and val folders]
 ```
+
+## About this Branch
+This branch tries to find an optimal Down Sampling Rate for each layer of the neural network. Following the work of HanSong
+
+Some funtions are to be implemented:
+1. An Agent that find a number for each layer:
+   1. The input states: layer number, c w h, the kernel numbers in the following layers.
+   2. The output value: Binary value of whether or not do a downSampling
+   3. Using something like DQN or policy gradient.
+2. The environment logic:
+   1. go through the network configuration and get a series of actions
+   2. Run the network with the actions series and calculate the error and FLOPS
+   3. PUT the state action reward tuples back into the memory
+3. The network interface:
+   1. This time the network should support set the DSRATE of each layer.
+
