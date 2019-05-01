@@ -509,7 +509,7 @@ class ActWrapper(object):
 
 class Agent:
     def __init__(self,
-        observation_space = (5,),
+        observation_space = 5,
         action_space = 2,gamma=0.99,lr=5e-4,
         checkpoint_path=None,
         load_path=None,
