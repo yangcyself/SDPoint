@@ -54,7 +54,7 @@ class dsENV:
         self.print_freq = print_freq
 
     def flops(self):
-        return flops.calculate(self.model,stochastic = False)
+        return flops.calculate(self.model,None,None,stochastic = False)
 
     def getshape(self):
         shape = []
@@ -83,8 +83,10 @@ class dsENV:
         """
         returns state, done
         """
-        self.dsrate.append(action)
-        self.currentShape *= action
+        rates = [1,0.75]
+        rate = rates[action]
+        self.dsrate.append(rate)
+        self.currentShape *= rate
         done = len(self.dsrate) ==len(self.layers)
         return self.getState(),done
         
@@ -217,14 +219,14 @@ def train(
         
         if done:
             Episode +=1
-            obs = env.reset()
             final_r = env.final_score()
             print("EPISODE:",Episode,"dsrate:",env.dsrate,"reward",final_r)
-            episode_rewards[-1] = final_r
+            episode_rewards[-1] = float(final_r.cpu().numpy())
             episode_rewards.append(0.0)
             reset = True
             agent.learn_step(tempbuff,final_r,t)
             tempbuff = []
+            obs = env.reset()
 
         mean_100ep_reward = round(np.mean(episode_rewards[-101:-1]), 1)
         num_episodes = len(episode_rewards)

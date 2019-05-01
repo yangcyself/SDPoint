@@ -4,7 +4,7 @@ import torch.nn as nn
 from functools import partial
 
 
-def calculate(model, blockID, ratio):
+def calculate(model, blockID, ratio,stochastic = True):
     flops = [0]
 
 
@@ -96,10 +96,10 @@ def calculate(model, blockID, ratio):
             hooks.append(m.register_forward_hook(partial(ops_residual_addition, flops=flops)))
 
     try:
-        model(torch.rand(1,3,224,224).float(), blockID, ratio)
+        model(torch.rand(1,3,224,224).float(), blockID, ratio,stochastic)
     except:
         flops[0] = 0
-        model(torch.rand(1,3,224,224).float().cuda(), blockID, ratio)
+        model(torch.rand(1,3,224,224).float().cuda(), blockID, ratio,stochastic)
 
     for h in hooks:
         h.remove()
