@@ -116,17 +116,17 @@ class dsENV:
                 batch_time.update(time.time() - end)
                 end = time.time()
 
-                if i % self.print_freq == 0:
-                    print('Test: [{0}/{1}]\t'
-                        'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                        'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                        'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                        'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                        i, len(val_loader), batch_time=batch_time, loss=losses,
-                        top1=top1, top5=top5))
+                # if i % self.print_freq == 0:
+                #     print('Test: [{0}/{1}]\t'
+                #         'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                #         'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                #         'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                #         'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+                #         i, len(val_loader), batch_time=batch_time, loss=losses,
+                #         top1=top1, top5=top5))
 
-            print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
-                .format(top1=top1, top5=top5))
+            # print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
+                # .format(top1=top1, top5=top5))
         return top1.avg, top5.avg
 
     def final_score(self):
@@ -134,7 +134,9 @@ class dsENV:
         calculate the final reward score
         """
         top1,top5 = self.validation()
-        return top1-(1e-9)*self.flops
+        flops = self.flops()
+        print("acc:" ,top1,"flops",flops)
+        return top1-(1e-9)*flops
 
 
 class AverageMeter(object):
@@ -189,6 +191,7 @@ def train(
     obs = env.reset()
     reset = True
     tempbuff = []
+    Episode = 0
     for t in range(total_timesteps):
         # Take action and update exploration to the newest value
         kwargs = {}
@@ -213,8 +216,10 @@ def train(
         obs = new_obs
         
         if done:
+            Episode +=1
             obs = env.reset()
             final_r = env.final_score()
+            print("EPISODE:",Episode,"dsrate:",env.dsrate,"reward",final_r)
             episode_rewards[-1] = final_r
             episode_rewards.append(0.0)
             reset = True
