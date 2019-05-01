@@ -69,7 +69,7 @@ class dsENV:
             the current layer
             the current featuremap shape
         """
-        cl = len(self.dsrate)
+        cl = len(self.dsrate)-1
         return np.array([cl,*(self.layers[cl]),self.currentShape])
 
     def reset(self):
@@ -95,7 +95,7 @@ class dsENV:
         top1 = AverageMeter()
         top5 = AverageMeter()
         self.model.eval()
-        self.model.setDSRate(self.dsrate)
+        self.model.module.setDSRate(self.dsrate)
         with torch.no_grad():
             end = time.time()
             for i, (input, target) in enumerate(self.val_loader):
@@ -209,7 +209,7 @@ def train(
         env_action = action
         reset = False
         new_obs,  done= env.step(env_action)
-        tempbuff.append(obs, action, new_obs, done)
+        tempbuff.append((obs, action, new_obs, done))
         obs = new_obs
         
         if done:
@@ -354,6 +354,8 @@ if __name__ == "__main__":
     env = dsENV(model,val_loader,criterion)
     total_timesteps = 100000
     agent = Agent(
+        5,# observation_space
         2,#action_space
         total_timesteps = total_timesteps
         )
+    train(agent,env)
