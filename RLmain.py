@@ -70,7 +70,8 @@ class dsENV:
             the current featuremap shape
         """
         cl = len(self.dsrate)-1
-        return np.array([cl,*(self.layers[cl]),self.currentShape])
+        res = np.array([cl,*(self.layers[cl]),self.currentShape])
+        return res * [1/24, 1/1024,1/512,1/256,1/100] # make the data scale not so hetero geneous
 
     def reset(self):
         """
@@ -161,6 +162,20 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
+class Logger(object):
+    
+    def __init__(self, log_dir):
+        """Create a summary writer logging to log_dir."""
+        self.writer = tf.summary.FileWriter(log_dir)
+
+    def scalar_summary(self, tag, value, step):
+        """Log a scalar variable."""
+        summary = tf.Summary(value=[tf.Summary.Value(tag=tag, simple_value=value)])
+        self.writer.add_summary(summary, step)
+
+
+tflogger = Logger("./logs")
+
 
 
 def train(
@@ -239,6 +254,10 @@ def train(
             logger.record_tabular("mean 100 episode reward", mean_100ep_reward)
             logger.record_tabular("% time spent exploring", int(100 * exploration.value(t)))
             logger.dump_tabular()
+
+            info = {'mean_100ep_reward': mean_100ep_reward}
+            for tag, value in info.items():
+                tflogger.scalar_summary(tag, value, t)
 
         if (checkpoint_freq is not None and t > learning_starts and
                 num_episodes > 100 and t % checkpoint_freq == 0):
