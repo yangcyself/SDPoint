@@ -623,6 +623,7 @@ class Agent:
             if t > self.learning_starts and t % self.target_network_update_freq == 0:
                 # Update target network periodically.
                 self.update_target()
+                
 
         self.last_t = t_
 

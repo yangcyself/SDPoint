@@ -11,7 +11,7 @@ __all__ = ['ResNeXt', 'resnext50', 'resnext101', 'resnext152']
 
 class Bottleneck(nn.Module):
 	expansion = 4
-
+			# block(self.inplanes, planes, self.base_width, self.cardinality, stride, downsample)
 	def __init__(self, inplanes, planes, base_width, cardinality, stride=1, downsample=None):
 		super(Bottleneck, self).__init__()
 		D = int(math.floor(planes * (base_width / 64)))
