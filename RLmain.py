@@ -129,6 +129,8 @@ class dsENV:
 
             # print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
                 # .format(top1=top1, top5=top5))
+                if i >= 5:
+                    break
         return top1.avg, top5.avg
 
     def final_score(self):
