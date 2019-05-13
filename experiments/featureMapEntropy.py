@@ -14,68 +14,46 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
+import sys
+import os
 
 # from module import Net
 import pickle as pkl
 
 
 class activationHooker:
-    def __init__(self,model,classNum = 100):
+    
+    def __init__(self,model,targetLayers=[], outputdir = "output"):
         # self.hookdist = {}
-        self.activations = {}
-        self.groundTruth = []
-        for i in range(classNum):
-            self.activations[i] = {}
+        self.activations = {} # save one list of featuremaps for each layer
         self.model = model
-        self.model.apply(lambda m: self.reg_hook(m,lambda m,inp,outp: self.hook(m,inp,outp,self.activations)))
-
-    def reg_hook(self,m,hook):
-        m.register_forward_hook(hook)
+        # targetLayers, the layer to which the hook is added
+        print("Total Layers: ",model.allblocks[-1].blockID
+                ,"hooked: ",targetLayers)
+        for i in targetLayers:
+            self.activations[i] = []
+            self.reg_hook(self.model.allblocks[i],self.hook,self.activations[i])
+        self.outputCount = 0
+        self.outputdir = outputdir
+    def reg_hook(self,m,hook,*args):
+        m.register_forward_hook(lambda a,b,c : hook(a,b,c,*args))
 
     def hook(self,m,inp,outp,stor):
-        assert(len(self.groundTruth)==outp.shape[0])
-        if(isinstance(m, torch.nn.modules.conv.Conv2d)):
-            for n, atv in zip(self.groundTruth,outp):
-                if(m in stor[n].keys()):
-                    act = stor[n][m]
-                    act += atv.cpu().numpy()
-                else:
-                    act = atv.cpu().numpy()
-                stor[n][m] = act
+        self.checkBuffer()
+        stor.append(outp.cpu().detach().numpy())
 
-    def dataloaders(self,data):
-        #return dataloaders of different number (number,dataloader)
-        # datas = {}
-        # for dt, tg in data:
-        #     datas{tg}
-        pass
-    
-    def analysisACT(self,loader,device):
-        self.model.eval()
-        mask2 = mask1 = torch.ones([100]).to(device)
-        count = 0
-        for i, (batch, label) in enumerate(loader):
-            batch = batch.to(device)
-            label = label.to(device)
-                # print(target)
-            # self.hookdist = self.activations[int(target.numpy())] # change the pointer to make ti
-            self.groundTruth = label
-                
-            output = self.model(data, mask1, mask2)
-            pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
-            count+=1
-                # print("a")
-        tempdict = {}
-        # for lay in self.hookdist.keys():
-        for i in range(10):
-            tempdict[i] = {}
-            for name, act in self.model.named_children():
-                tempdict[i][name] = self.activations[i][act]/count
-                # tempdict[lay] = self.hookdist[lay]/count
-        self.hookdist = {}
-        print(tempdict)
-        
-        return tempdict
+    def savebuffer(self):
+        with open(os.path.join(self.outputdir,"%d.pkl"%self.outputCount),"wb") as f:
+            pkl.dump(self.activations,f)
+
+    def checkBuffer(self):
+        # save the stored values into file
+        if(sys.getsizeof(self.activations) > 1e8):
+            print("saved%d"%self.outputCount)
+            self.savebuffer()
+            for k,v in self.activations.items():
+                v.clear()
+
 
 if __name__ == "__main__":
     test_path = "./mnist_data"

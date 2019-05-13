@@ -17,7 +17,17 @@ import torchvision.datasets as datasets
 from torch.utils.data.sampler import SubsetRandomSampler
 import models
 import utils.flops as flops
-from predictor import Predictor
+
+
+HOOKFEATUREMAP = True
+HOOKFEATUREMAP_LAYERS = [2,10]
+HOOKFEATUREMAP_DIR = "hookoutput"
+
+QUICK  = True
+
+if(HOOKFEATUREMAP):
+    from experiments.featureMapEntropy import activationHooker
+
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -179,8 +189,8 @@ def main():
     train_loader = dataset.loader(args.train_path)
     val_loader = dataset.test_loader(args.test_path)
 
-    trainPredictor(val_loader,model,criterion,10,0.75)
-    return 
+    if(HOOKFEATUREMAP):
+        hooker = activationHooker(model.module,HOOKFEATUREMAP_LAYERS,HOOKFEATUREMAP_DIR)
 
     if args.evaluate:
         model.eval()
@@ -205,7 +215,9 @@ def main():
                                     model_flops, top1=top1, top5=top5))
 
         val_results_file.close()
-        return
+        if(HOOKFEATUREMAP):
+            hooker.savebuffer()
+        return ######## NOTE THIS RETURN #####################
 
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
@@ -270,7 +282,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
                    data_time=data_time, loss=losses, top1=top1, top5=top5))
 
 
-def validate(train_loader, val_loader, model, criterion, blockID, ratio):
+def validate(train_loader, val_loader, model, criterion, blockID, ratio,):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -301,6 +313,8 @@ def validate(train_loader, val_loader, model, criterion, blockID, ratio):
                       'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'.format(
                        i, len(train_loader), batch_time=batch_time,
                        data_time=data_time))
+            if(QUICK):
+                break
 
     # switch to evaluate mode
     model.eval()
@@ -333,61 +347,13 @@ def validate(train_loader, val_loader, model, criterion, blockID, ratio):
                       'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
                        i, len(val_loader), batch_time=batch_time, loss=losses,
                        top1=top1, top5=top5))
+            if(QUICK):
+                break
 
         print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
               .format(top1=top1, top5=top5))
 
     return top1.avg, top5.avg
-
-
-def trainPredictor(val_loader, model,criterion,blockID, ratio):
-    predictor = Predictor(model.module.allblocks[blockID].inplanes)
-    predictor = predictor.cuda()
-    optimizer = torch.optim.SGD(predictor.parameters(),
-                                0.001, momentum=0.9,
-                                weight_decay=1e-4)
-
-    stor = []
-    losses = AverageMeter()
-
-    def hook(m,inp,outp,stor):
-        stor.append(inp)
-    hookHandle = model.module.allblocks[blockID].register_forward_hook(lambda m,i,o: hook(m,i,o,stor))
-    model.eval()
-    predictor.train()
-    for i, (feainput, featarget) in enumerate(val_loader):
-        feainput = feainput.cuda()
-        featarget = featarget.cuda(non_blocking=True)
-
-        # compute output
-        dsoutput = model(feainput, blockID=blockID, ratio=ratio)
-        dsloss = nn.functional.cross_entropy(dsoutput, featarget,reduction = 'none')
-
-        orioutput = model(feainput, blockID=None, ratio=None,stochastic = False)#.detach()
-        oriloss = nn.functional.cross_entropy(orioutput, featarget,reduction = 'none')
-
-        target = oriloss-dsloss
-        target = target.cuda()
-        input = stor.pop()[0]
-        input = input.cuda()
-        pred = predictor(input)
-        pred = pred.view((-1))
-        #print(pred,target)
-        loss = nn.functional.mse_loss(pred,target)
-        losses.update(loss.item(), input.size(0))
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        # print(i,loss)
-        # print("oneEPOCH")
-        if i % args.print_freq == 0:
-            print('Epoch: [{0}/{1}]\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  .format(
-                   i, len(val_loader),
-                   loss=losses))
-    hookHandle.remove()
 
 
 
