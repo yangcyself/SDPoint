@@ -20,7 +20,7 @@ class pipeConv(nn.Module):
         self.upspl =  nn.Upsample(scale_factor=2, mode='nearest')
         self.dnspl = nn.AvgPool2d(2)
     def forward(self,x):
-        print("xshape:",x.shape)
+        # print("xshape:",x.shape)
         if(x.shape[2]%2==1):
             x = F.pad(input=x, pad=(0, 1 , 0, 1), mode='constant', value=0)
         halfshape = (int(x.shape[2]/2), int(x.shape[3]/2))
