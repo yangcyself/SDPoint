@@ -33,7 +33,7 @@ class pipeConv(nn.Module):
         # print("dnsplxshape:",self.dnspl(x_l).shape)
         
         o_l = x_l + self.upspl(x_s)
-        o_s =  self.dnspl(x_l) + x_s
+        o_s = self.dnspl(x_l) + x_s
 
         
         o_s = F.pad(input=o_s, pad=(0, o_l.shape[2] - o_s.shape[2], 0, o_l.shape[3] - o_s.shape[3]), mode='constant', value=0)
@@ -49,9 +49,10 @@ class pipeNet(nn.Module):
         super(pipeNet,self).__init__(*args, **kwargs)
         self.cnn1 = pipeConv(3,96)
         self.cnn2 = pipeConv(96,256)
-        self.cnn3 = pipeConv(256,384)
-        self.cnn4 = pipeConv(384,384)
-        self.cnn5 = pipeConv(384,1024)
+        # self.cnn3 = pipeConv(256,384)
+        # self.cnn4 = pipeConv(384,384)
+        # self.cnn5 = pipeConv(384,1024)
+        self.cnn5 = pipeConv(256,1024)
         self.fc1 = nn.Linear(1024,out_num)
         self.pool = nn.AvgPool2d(2)
         self.final_pool = nn.AdaptiveAvgPool2d(1)
@@ -60,9 +61,9 @@ class pipeNet(nn.Module):
         x = self.cnn1(x)
         x = self.cnn2(x)
         x = self.pool(x)
-        x = self.cnn3(x)
-        x = self.cnn4(x)
-        x = self.pool(x)
+        # x = self.cnn3(x)
+        # x = self.cnn4(x)
+        # x = self.pool(x)
         x = self.cnn5(x)
         x = self.final_pool(x)
 
