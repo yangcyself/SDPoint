@@ -122,6 +122,20 @@ def main():
     optimizer = torch.optim.SGD(model.parameters(),
                                 args.lr, momentum=args.momentum,
                                 weight_decay=args.weight_decay)
+    
+    if args.resume:
+        if os.path.isfile(args.resume):
+            print("=> loading checkpoint '{}'".format(args.resume))
+            checkpoint = torch.load(args.resume)
+            args.start_epoch = checkpoint['epoch']
+            model.load_state_dict(checkpoint['state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer'])
+            print("=> loaded checkpoint '{}' (epoch {})"
+                  .format(args.resume, checkpoint['epoch']))
+        else:
+            print("=> no checkpoint found at '{}'".format(args.resume))
+            
+
     dataset=DataSet(torch_v=args.torch_version)
     train_loader = dataset.loader(args.train_path,batch_size = args.batch_size)
     val_loader = dataset.test_loader(args.test_path,batch_size = args.batch_size)
