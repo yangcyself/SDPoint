@@ -22,22 +22,37 @@ class pipeConv(nn.Module):
     def forward(self,x):
         print("xshape:",x.shape)
         halfshape = (int(x.shape[2]/2), int(x.shape[3]/2))
-        x_l = x * self.in_mask.view(1,-1,1,1) # the feature maps which have larger size
+        print(torch.cuda.memory_allocated())
+        # x_l = x * self.in_mask.view(1,-1,1,1) # the feature maps which have larger size
+        # x_s = (x * (1-self.in_mask).view(1,-1,1,1))[:,:,:halfshape[0],:halfshape[1]]
         x_s = (x * (1-self.in_mask).view(1,-1,1,1))[:,:,:halfshape[0],:halfshape[1]]
+        print(torch.cuda.memory_allocated())
+        x = x * self.in_mask.view(1,-1,1,1) # the feature maps which have larger size
+        print(torch.cuda.memory_allocated())
 
-        x_l = self.conv(x_l)
+        print(torch.cuda.memory_allocated())
+        x = self.conv(x)
+        
+        print(torch.cuda.memory_allocated())
         x_s = self.conv(x_s)
         # print("x_lshape:",x_l.shape)
         # print("x_sshape:",x_s.shape)
         # print("upsplxshape:",self.upspl(x_s).shape)
         # print("dnsplxshape:",self.dnspl(x_l).shape)
         
-        o_l = x_l + self.upspl(x_s)
-        o_s = self.dnspl(x_l) + x_s
+        print(torch.cuda.memory_allocated())
+        o_l = x + self.upspl(x_s)
+        o_s = self.dnspl(x) + x_s
+        # o_l = x_l + self.upspl(x_s)
+        # o_s = self.dnspl(x_l) + x_s
 
-        
+        print(torch.cuda.memory_allocated())
         o_s = F.pad(input=o_s, pad=(0, o_l.shape[2] - o_s.shape[2], 0, o_l.shape[3] - o_s.shape[3]), mode='constant', value=0)
         # print("osshape",o_s.shape)
+        del(x)
+        del(x_s)
+        torch.cuda.empty_cache()
+        print(torch.cuda.memory_allocated())
         out = o_l*self.out_mask.view(1,-1,1,1) + o_s*(1-self.out_mask).view(1,-1,1,1)
         out = self.bn(out)
         out = self.relu(out)

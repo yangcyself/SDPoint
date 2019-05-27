@@ -74,7 +74,7 @@ parser.add_argument('--epochs', default=115, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=256, type=int,
+parser.add_argument('-b', '--batch-size', default=16, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('-vb', '--val-batch-size', default=1024, type=int,
                     metavar='N', help='validation mini-batch size (default: 1024)')
@@ -123,8 +123,8 @@ def main():
                                 args.lr, momentum=args.momentum,
                                 weight_decay=args.weight_decay)
     dataset=DataSet(torch_v=args.torch_version)
-    train_loader = dataset.loader(args.train_path)
-    val_loader = dataset.test_loader(args.test_path)
+    train_loader = dataset.loader(args.train_path,batch_size = args.batch_size)
+    val_loader = dataset.test_loader(args.test_path,batch_size = args.batch_size)
 
     for epoch in range(args.start_epoch, args.epochs):
         adjust_learning_rate(optimizer, epoch)
