@@ -19,8 +19,8 @@ import models
 import utils.flops as flops
 
 
-HOOKFEATUREMAP = True
-HOOKFEATUREMAP_LAYERS = [2,10]
+HOOKFEATUREMAP = False
+HOOKFEATUREMAP_LAYERS = [2,10,20,30]
 HOOKFEATUREMAP_DIR = "hookoutput"
 
 QUICK  = True
@@ -48,7 +48,7 @@ parser.add_argument('--epochs', default=115, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=256, type=int,
+parser.add_argument('-b', '--batch-size', default=64, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('-vb', '--val-batch-size', default=1024, type=int,
                     metavar='N', help='validation mini-batch size (default: 1024)')

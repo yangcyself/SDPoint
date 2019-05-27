@@ -7,3 +7,5 @@ utils/__pycache__/*
 *.ipynb
 *.pth.tar*
 __pycache__/*
+hookoutput/*
+experiments/__pycache__/*

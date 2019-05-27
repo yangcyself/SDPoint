@@ -1,3 +1,6 @@
+## TwoPipes
+直接改resnext太麻烦了，还是搞一个小网络玩玩先
+
 #  Stochastic Downsampling for Cost-Adjustable Inference and Improved Regularization in Convolutional Networks (SDPoint)
 
 ![](http://oi64.tinypic.com/2ly1lk0.jpg)
