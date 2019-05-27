@@ -22,8 +22,8 @@ class pipeConv(nn.Module):
     def forward(self,x):
         print("xshape:",x.shape)
         halfshape = (int(x.shape[2]/2), int(x.shape[3]/2))
-        x_l = x * self.in_mask.reshape(1,-1,1,1) # the feature maps which have larger size
-        x_s = (x * (1-self.in_mask).reshape(1,-1,1,1))[:,:,:halfshape[0],:halfshape[1]]
+        x_l = x * self.in_mask.view(1,-1,1,1) # the feature maps which have larger size
+        x_s = (x * (1-self.in_mask).view(1,-1,1,1))[:,:,:halfshape[0],:halfshape[1]]
 
         x_l = self.conv(x_l)
         x_s = self.conv(x_s)
@@ -38,7 +38,7 @@ class pipeConv(nn.Module):
         
         o_s = F.pad(input=o_s, pad=(0, o_l.shape[2] - o_s.shape[2], 0, o_l.shape[3] - o_s.shape[3]), mode='constant', value=0)
         # print("osshape",o_s.shape)
-        out = o_l*self.out_mask.reshape(1,-1,1,1) + o_s*(1-self.out_mask).reshape(1,-1,1,1)
+        out = o_l*self.out_mask.view(1,-1,1,1) + o_s*(1-self.out_mask).view(1,-1,1,1)
         out = self.bn(out)
         out = self.relu(out)
         # print("outshape",out.shape)
