@@ -138,8 +138,8 @@ def main():
             
 
     # dataset=DataSet(torch_v=args.torch_version)
-    train_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=True, transform=transforms.ToTensor()), batch_size=args.batch_size, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=True, transform=transforms.ToTensor(),download=True), batch_size=args.batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=False, transform=transforms.ToTensor(),download=True), batch_size=args.batch_size, shuffle=True)
     # train_loader = dataset.loader(args.train_path,batch_size = args.batch_size)
     # val_loader = dataset.test_loader(args.test_path,batch_size = args.batch_size)
 
