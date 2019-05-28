@@ -62,20 +62,31 @@ class pipeConv(nn.Module):
         return out
 
 class pipeNet(nn.Module):
-    def __init__(self,out_num, *args, **kwargs):
+    def __init__(self,out_num,ds_probability = 1 ,*args, **kwargs):
+        self.p = 1
         super(pipeNet,self).__init__(*args, **kwargs)
-        self.cnn1 = pipeConv(3,96)
+        self.channel_num = [96,152,256,256,512]
+        l_count = 0
+        self.cnn1 = pipeConv(3,self.channel_num[l_count])
+        l_count += 1
         # self.cnn1_1 = pipeConv(24,96)
-        self.cnn2 = pipeConv(96,152)
-        self.cnn3 = pipeConv(152,256)
-        self.cnn4 = pipeConv(256,256)
-        self.cnn5 = pipeConv(256,512)
-        self.fc1 = nn.Linear(512,out_num)
+        self.cnn2 = pipeConv(self.channel_num[l_count-1],self.channel_num[l_count])
+        l_count += 1
+        self.cnn3 = pipeConv(self.channel_num[l_count-1],self.channel_num[l_count])
+        l_count += 1
+        self.cnn4 = pipeConv(self.channel_num[l_count-1],self.channel_num[l_count])
+        l_count += 1
+        self.cnn5 = pipeConv(self.channel_num[l_count-1],self.channel_num[l_count])
+        l_count += 1
+        self.fc1 = nn.Linear(self.channel_num[l_count-1],out_num)
+        l_count += 1
         self.pool = nn.MaxPool2d(2)
         self.avpool = nn.AvgPool2d(2)
         self.final_pool = nn.AdaptiveAvgPool2d(1)
 
+        
     def forward(self,x):
+        self.randomMask(self.p)
         x = self.avpool(x)
         x = self.cnn1(x)
         x = self.pool(x)
@@ -92,6 +103,31 @@ class pipeNet(nn.Module):
         x = x.view(x.size(0),-1)
         x = self.fc1(x)
         return x
+    
+    def randomMask(self,p):
+        # np.random.binomial(1,p,(,))
+        count = 0
+        mask = np.random.binomial(1,p,(count,))
+        self.cnn1.out_mask = torch.Tensor(mask).cuda()
+        self.cnn2.in_mask = torch.Tensor(mask).cuda()
+        count += 1
+        mask = np.random.binomial(1,p,(count,))
+        self.cnn2.out_mask = torch.Tensor(mask).cuda()
+        self.cnn3.in_mask = torch.Tensor(mask).cuda()
+        count += 1
+
+        mask = np.random.binomial(1,p,(count,))
+        self.cnn3.out_mask =torch.Tensor(mask).cuda()
+        self.cnn4.in_mask = torch.Tensor(mask).cuda()
+        count += 1
+
+        mask = np.random.binomial(1,p,(count,))
+        self.cnn4.out_mask = torch.Tensor(mask).cuda()
+        self.cnn5.in_mask = torch.Tensor(mask).cuda()
+        count += 1
+
+
+
 
 
 
