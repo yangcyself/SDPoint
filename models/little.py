@@ -107,21 +107,21 @@ class pipeNet(nn.Module):
     def randomMask(self,p):
         # np.random.binomial(1,p,(,))
         count = 0
-        mask = np.random.binomial(1,p,(count,))
+        mask = np.random.binomial(1,p,(self.channel_num[count],))
         self.cnn1.out_mask = torch.Tensor(mask).cuda()
         self.cnn2.in_mask = torch.Tensor(mask).cuda()
         count += 1
-        mask = np.random.binomial(1,p,(count,))
+        mask = np.random.binomial(1,p,(self.channel_num[count],))
         self.cnn2.out_mask = torch.Tensor(mask).cuda()
         self.cnn3.in_mask = torch.Tensor(mask).cuda()
         count += 1
 
-        mask = np.random.binomial(1,p,(count,))
+        mask = np.random.binomial(1,p,(self.channel_num[count],))
         self.cnn3.out_mask =torch.Tensor(mask).cuda()
         self.cnn4.in_mask = torch.Tensor(mask).cuda()
         count += 1
 
-        mask = np.random.binomial(1,p,(count,))
+        mask = np.random.binomial(1,p,(self.channel_num[count],))
         self.cnn4.out_mask = torch.Tensor(mask).cuda()
         self.cnn5.in_mask = torch.Tensor(mask).cuda()
         count += 1
