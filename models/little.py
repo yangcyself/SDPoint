@@ -64,8 +64,8 @@ class pipeConv(nn.Module):
 class pipeNet(nn.Module):
     def __init__(self,out_num, *args, **kwargs):
         super(pipeNet,self).__init__(*args, **kwargs)
-        self.cnn1 = pipeConv(3,24)
-        self.cnn1_1 = pipeConv(24,96)
+        self.cnn1 = pipeConv(3,96)
+        # self.cnn1_1 = pipeConv(24,96)
         self.cnn2 = pipeConv(96,152)
         self.cnn3 = pipeConv(152,256)
         self.cnn4 = pipeConv(256,256)
@@ -79,8 +79,8 @@ class pipeNet(nn.Module):
         x = self.avpool(x)
         x = self.cnn1(x)
         x = self.pool(x)
-        x = self.cnn1_1(x)
-        x = self.pool(x)
+        # x = self.cnn1_1(x)
+        # x = self.pool(x)
         x = self.cnn2(x)
         x = self.pool(x)
         x = self.cnn3(x)

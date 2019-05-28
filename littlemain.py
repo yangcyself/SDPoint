@@ -19,50 +19,50 @@ from models.little import pipeNet
 import utils.flops as flops
 
 
-class DataSet:
-    def __init__(self, torch_v=0.4):
-        self.torch_v = torch_v
+# class DataSet:
+#     def __init__(self, torch_v=0.4):
+#         self.torch_v = torch_v
 
-    def loader(self, path, batch_size=32, num_workers=4, pin_memory=True,valid_size=0.1):
-        '''normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])'''
-        normalize = transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-        if self.torch_v == 0.3:
-            resize = transforms.RandomSizedCrop(224)
-        else:
-            resize = transforms.RandomResizedCrop(224)
+#     def loader(self, path, batch_size=32, num_workers=4, pin_memory=True,valid_size=0.1):
+#         '''normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])'''
+#         normalize = transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+#         if self.torch_v == 0.3:
+#             resize = transforms.RandomSizedCrop(224)
+#         else:
+#             resize = transforms.RandomResizedCrop(224)
 
-        traindata_transforms = transforms.Compose([
-            resize,
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            normalize])
+#         traindata_transforms = transforms.Compose([
+#             resize,
+#             transforms.RandomHorizontalFlip(),
+#             transforms.ToTensor(),
+#             normalize])
 
-        return data.DataLoader(
-                dataset=datasets.CIFAR100(root=path, train=True, download=True, transform=traindata_transforms),
-                batch_size=batch_size,
-                shuffle=True,
-                num_workers=num_workers,
-                pin_memory=pin_memory)
+#         return data.DataLoader(
+#                 dataset=datasets.CIFAR100(root=path, train=True, download=True, transform=traindata_transforms),
+#                 batch_size=batch_size,
+#                 shuffle=True,
+#                 num_workers=num_workers,
+#                 pin_memory=pin_memory)
             
 
-    def test_loader(self, path, batch_size=32, num_workers=4, pin_memory=True):
-        '''normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])'''
-        normalize = transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-        if self.torch_v == 0.3:
-            resize = transforms.Scale(256)
-        else:
-            resize = transforms.Resize(256)
-        testdata_transforms = transforms.Compose([
-            resize,
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            normalize])
-        return data.DataLoader(
-            dataset=datasets.CIFAR100(root=path, train=False, download=True, transform=testdata_transforms),
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=num_workers,
-            pin_memory=pin_memory)
+#     def test_loader(self, path, batch_size=32, num_workers=4, pin_memory=True):
+#         '''normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])'''
+#         normalize = transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+#         if self.torch_v == 0.3:
+#             resize = transforms.Scale(256)
+#         else:
+#             resize = transforms.Resize(256)
+#         testdata_transforms = transforms.Compose([
+#             resize,
+#             transforms.CenterCrop(224),
+#             transforms.ToTensor(),
+#             normalize])
+#         return data.DataLoader(
+#             dataset=datasets.CIFAR100(root=path, train=False, download=True, transform=testdata_transforms),
+#             batch_size=batch_size,
+#             shuffle=False,
+#             num_workers=num_workers,
+#             pin_memory=pin_memory)
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training - Stochastic Downsampling')
 
@@ -136,9 +136,11 @@ def main():
             print("=> no checkpoint found at '{}'".format(args.resume))
             
 
-    dataset=DataSet(torch_v=args.torch_version)
-    train_loader = dataset.loader(args.train_path,batch_size = args.batch_size)
-    val_loader = dataset.test_loader(args.test_path,batch_size = args.batch_size)
+    # dataset=DataSet(torch_v=args.torch_version)
+    train_loader = torch.utils.data.DataLoader(dataset=MNIST('./data/{0}'.format(dataset), train=True, transform=transforms.ToTensor()), batch_size=batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(dataset=MNIST('./data/{0}'.format(dataset), train=False, transform=transforms.ToTensor()), batch_size=batch_size, shuffle=True)
+    # train_loader = dataset.loader(args.train_path,batch_size = args.batch_size)
+    # val_loader = dataset.test_loader(args.test_path,batch_size = args.batch_size)
 
     for epoch in range(args.start_epoch, args.epochs):
         adjust_learning_rate(optimizer, epoch)
