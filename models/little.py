@@ -63,7 +63,7 @@ class pipeConv(nn.Module):
 
 class pipeNet(nn.Module):
     def __init__(self,out_num,ds_probability = 1 ,*args, **kwargs):
-        self.p = 1
+        self.p = ds_probability
         super(pipeNet,self).__init__(*args, **kwargs)
         self.channel_num = [96,152,256,256,512]
         l_count = 0
