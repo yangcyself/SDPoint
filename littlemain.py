@@ -16,6 +16,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from torch.utils.data.sampler import SubsetRandomSampler
 from models.little import pipeNet
+from torchvision.datasets import MNIST
 import utils.flops as flops
 
 
@@ -137,8 +138,8 @@ def main():
             
 
     # dataset=DataSet(torch_v=args.torch_version)
-    train_loader = torch.utils.data.DataLoader(dataset=MNIST('./data/{0}'.format(dataset), train=True, transform=transforms.ToTensor()), batch_size=batch_size, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(dataset=MNIST('./data/{0}'.format(dataset), train=False, transform=transforms.ToTensor()), batch_size=batch_size, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=True, transform=transforms.ToTensor()), batch_size=args.batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size, shuffle=True)
     # train_loader = dataset.loader(args.train_path,batch_size = args.batch_size)
     # val_loader = dataset.test_loader(args.test_path,batch_size = args.batch_size)
 
