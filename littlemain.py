@@ -64,6 +64,7 @@ import utils.flops as flops
 #             shuffle=False,
 #             num_workers=num_workers,
 #             pin_memory=pin_memory)
+QUICK = False
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training - Stochastic Downsampling')
 
@@ -143,6 +144,11 @@ def main():
     # train_loader = dataset.loader(args.train_path,batch_size = args.batch_size)
     # val_loader = dataset.test_loader(args.test_path,batch_size = args.batch_size)
 
+    if(args.evaluate):
+        validate(train_loader,val_loader,model,criterion,None,None)
+    else:
+        main_train(args,optimizer,train_loader,model,criterion)
+def main_train(args,optimizer,train_loader,model,criterion):
     for epoch in range(args.start_epoch, args.epochs):
         adjust_learning_rate(optimizer, epoch)
 
@@ -237,6 +243,52 @@ def train(train_loader, model, criterion, optimizer, epoch):
                    epoch, i, len(train_loader), batch_time=batch_time,
                    data_time=data_time, loss=losses, top1=top1, top5=top5))
 
+
+def validate(train_loader, val_loader, model, criterion, blockID, ratio,):
+    batch_time = AverageMeter()
+    data_time = AverageMeter()
+    losses = AverageMeter()
+    top1 = AverageMeter()
+    top5 = AverageMeter()
+
+    # switch to evaluate mode
+    model.eval()
+
+    with torch.no_grad():
+        end = time.time()
+        for i, (input, target) in enumerate(val_loader):
+            input = input.cuda()
+            target = target.cuda(non_blocking=True)
+
+            # compute output
+            output = model(input )
+            loss = criterion(output, target)
+
+            # measure accuracy and record loss
+            prec1, prec5 = accuracy(output, target, topk=(1, 5))
+            losses.update(loss.item(), input.size(0))
+            top1.update(prec1[0], input.size(0))
+            top5.update(prec5[0], input.size(0))
+
+            # measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+            if i % args.print_freq == 0:
+                print('Test: [{0}/{1}]\t'
+                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                      'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                      'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+                       i, len(val_loader), batch_time=batch_time, loss=losses,
+                       top1=top1, top5=top5))
+            if(QUICK):
+                break
+
+        print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
+              .format(top1=top1, top5=top5))
+
+    return top1.avg, top5.avg
 
 if __name__ == '__main__':
     main()
