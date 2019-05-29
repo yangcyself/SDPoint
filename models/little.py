@@ -14,7 +14,7 @@ class pipeConv(nn.Module):
         super(pipeConv,self).__init__(*args, **kwargs)
         self.in_mask = torch.Tensor(np.array([1]*inplanes)).cuda()
         self.out_mask = torch.Tensor(np.array([1]*outplanes)).cuda()
-        self.conv = nn.Conv2d(inplanes, outplanes , kernel_size=3, bias=False)
+        self.conv = nn.Conv2d(inplanes, outplanes , padding = 1,kernel_size=3, bias=False)
         self.bn = nn.BatchNorm2d(outplanes)
         self.relu = nn.ReLU(inplace=True)
         self.upspl =  nn.Upsample(scale_factor=2, mode='nearest')
