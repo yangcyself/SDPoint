@@ -14,7 +14,7 @@ class pipeConv(nn.Module):
         super(pipeConv,self).__init__(*args, **kwargs)
         self.in_mask = torch.Tensor(np.array([1]*inplanes)).cuda()
         self.out_mask = torch.Tensor(np.array([1]*outplanes)).cuda()
-        self.conv = nn.Conv2d(inplanes, outplanes , kernel_size=1, bias=False)
+        self.conv = nn.Conv2d(inplanes, outplanes , kernel_size=3, bias=False)
         self.bn = nn.BatchNorm2d(outplanes)
         self.relu = nn.ReLU(inplace=True)
         self.upspl =  nn.Upsample(scale_factor=2, mode='nearest')
@@ -88,9 +88,9 @@ class pipeNet(nn.Module):
         
     def forward(self,x):
         self.randomMask(self.p)
-        x = self.avpool(x)
+        # x = self.avpool(x)
         x = self.cnn1(x)
-        x = self.pool(x)
+        # x = self.pool(x)
         # x = self.cnn1_1(x)
         # x = self.pool(x)
         x = self.cnn2(x)
