@@ -132,10 +132,10 @@ ModelDebug = False
 
 if __name__ == '__main__':
     ModelDebug =  True
-    import torchvision.transforms as transform
+    import torchvision.transforms as transforms
     from torchvision.datasets import MNIST
     model = pipeNet(100).cuda()
-    train_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=True, transform=transforms.ToTensor(),download=True), batch_size=args.batch_size, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=True, transform=transforms.ToTensor(),download=True), batch_size=32, shuffle=True)
     for i, (input, target) in enumerate(train_loader):
         target = target.cuda(non_blocking=True)
         input = input.cuda()
