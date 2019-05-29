@@ -20,7 +20,8 @@ class pipeConv(nn.Module):
         self.upspl =  nn.Upsample(scale_factor=2, mode='nearest')
         self.dnspl = nn.AvgPool2d(2)
     def forward(self,x):
-        # print("xshape:",x.shape)
+        if(ModelDebug):
+            print("xshape:",x.shape)
         if(x.shape[2]%2==1):
             x = F.pad(input=x, pad=(0, 1 , 0, 1), mode='constant', value=0)
         halfshape = (int(x.shape[2]/2), int(x.shape[3]/2))
@@ -127,8 +128,20 @@ class pipeNet(nn.Module):
         count += 1
 
 
+ModelDebug = False
 
-
-
-
+if __name__ == '__main__':
+    ModelDebug =  True
+    import torchvision.transforms as transform
+    from torchvision.datasets import MNIST
+    model = pipeNet(100).cuda()
+    train_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=True, transform=transforms.ToTensor(),download=True), batch_size=args.batch_size, shuffle=True)
+    for i, (input, target) in enumerate(train_loader):
+        target = target.cuda(non_blocking=True)
+        input = input.cuda()
+        # compute output
+        output = model(input)
+        break
     
+
+
