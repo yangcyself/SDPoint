@@ -16,6 +16,8 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from torch.utils.data.sampler import SubsetRandomSampler
 from models.little import pipeNet
+from models.cdsResnext import cdsresnext50
+# from models.resnext import resnext50
 from torchvision.datasets import MNIST
 import utils.flops as flops
 from utils.dataset import StanfordDog
@@ -110,6 +112,8 @@ parser.add_argument("--torch_version", dest="torch_version", action="store", typ
 
 args = parser.parse_args()
 
+DEBUG = True
+
 def adjust_learning_rate(optimizer, epoch):
     """Sets the learning rate to the initial LR decayed by 10 after the 40th, 75th, and 105th epochs"""
     lr = args.lr
@@ -120,7 +124,9 @@ def adjust_learning_rate(optimizer, epoch):
         param_group['lr'] = lr
 
 def main():
-    model = pipeNet(100).cuda()
+    #model = pipeNet(100).cuda()
+    model = cdsresnext50(inputChannels = 1).cuda()
+    # model = resnext50(inputChannels = 1).cuda()
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(model.parameters(),
                                 args.lr, momentum=args.momentum,
@@ -141,13 +147,13 @@ def main():
 
     # dataset=DataSet(torch_v=args.torch_version)
     ############### USE MINST AS Dataset #######################
-    # train_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=True, transform=transforms.ToTensor(),download=True), batch_size=args.batch_size, shuffle=True)
-    # val_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=False, transform=transforms.ToTensor(),download=True), batch_size=args.batch_size, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=True, transform=transforms.ToTensor(),download=True), batch_size=args.batch_size, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=False, transform=transforms.ToTensor(),download=True), batch_size=args.batch_size, shuffle=True)
     # train_loader = dataset.loader(args.train_path,batch_size = args.batch_size)
     # val_loader = dataset.test_loader(args.test_path,batch_size = args.batch_size)
     ################# USE STANFORD DOGS ########################
-    train_loader = torch.utils.data.DataLoader(dataset=StanfordDog(root='~/dataset/', train=True), batch_size=args.batch_size, shuffle=True)
-    val_loader = torch.utils.data.DataLoader(dataset=StanfordDog(root='~/dataset/', train=False), batch_size=args.batch_size, shuffle=True)
+    # train_loader = torch.utils.data.DataLoader(dataset=StanfordDog(root='~/dataset/', train=True), batch_size=args.batch_size, shuffle=True)
+    # val_loader = torch.utils.data.DataLoader(dataset=StanfordDog(root='~/dataset/', train=False), batch_size=args.batch_size, shuffle=True)
 
     if(args.evaluate):
         validate(train_loader,val_loader,model,criterion,None,None)
@@ -248,6 +254,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
                    epoch, i, len(train_loader), batch_time=batch_time,
                    data_time=data_time, loss=losses, top1=top1, top5=top5))
 
+    if(DEBUG):
+        return
 
 def validate(train_loader, val_loader, model, criterion, blockID, ratio,):
     batch_time = AverageMeter()

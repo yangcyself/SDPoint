@@ -16,7 +16,7 @@ class pipeConv(nn.Module):
     #   and whether output channel should be downsampled
     masks = {} # the dict preserving all the masks  layerId -> maks
     def __init__(self, in_maskid, out_maskid, *args, **kwargs):
-        super(pipeConv,self).__init__(*args, **kwargs)
+        super(pipeConv,self).__init__()
         self.in_maskid = in_maskid
         self.out_maskid = out_maskid
         self.conv = nn.Conv2d(*args, **kwargs)
@@ -80,13 +80,19 @@ class Bottleneck(nn.Module):
 		self.relu = nn.ReLU(inplace=True)
 		self.stride = stride
 		self.inplanes = inplanes
+
+		self.residualChannelMapper = pipeConv(self.maskid,self.maskid+3,inplanes,planes*self.expansion,
+									kernel_size=1, stride=stride, bias=False)
+
 		global blockID
 		self.blockID = blockID
 		blockID += 1
 
 	def forward(self, x):
     		
-		residual = x
+		if(x.shape[2]%2==1):
+			x = F.pad(input=x, pad=(0, 1 , 0, 1), mode='constant', value=0)
+		residual = self.residualChannelMapper(x)
 
 		out = self.conv1(x)
 		out = self.bn1(out)
@@ -99,6 +105,9 @@ class Bottleneck(nn.Module):
 		out = self.conv3(out)
 		out = self.bn3(out)
 
+		
+		# print("residual and out shape", residual.shape, out.shape)
+		
 		out += residual
 		out = self.relu(out)
 
@@ -107,7 +116,7 @@ class Bottleneck(nn.Module):
 
 class CdsResNeXt(nn.Module):
 
-	def __init__(self, block, layers, base_width=4, cardinality=32, num_classes=1000):
+	def __init__(self, block, layers, base_width=4, cardinality=32, inputChannels = 3,num_classes=1000):
 		self.cardinality = cardinality
 		self.base_width = base_width
 		self.inplanes = 64
@@ -115,7 +124,7 @@ class CdsResNeXt(nn.Module):
 		global blockID
 		blockID = 1
 
-		self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, #没明白这个conv1是干啥用的
+		self.conv1 = nn.Conv2d(inputChannels, 64, kernel_size=7, stride=2, padding=3, #没明白这个conv1是干啥用的
 							   bias=False)
 		self.bn1 = nn.BatchNorm2d(64)
 		self.relu = nn.ReLU(inplace=True)
@@ -147,12 +156,12 @@ class CdsResNeXt(nn.Module):
 	def _make_layer(self, block, planes, blocks, stride=1,pipeMaskIDs = None):
 		layers = []
 		assert (pipeMaskIDs is not None)
-		layers.append(block(self.inplanes, planes, self.base_width, self.cardinality, stride, pipeMaskIDs))
+		layers.append(block(self.inplanes, planes, self.base_width, self.cardinality, stride, pipeMaskIds =  pipeMaskIDs))
 		self.allblocks.append(layers[-1]) # add blocks according to the blockID
 
 		self.inplanes = planes * block.expansion
 		for i in range(1, blocks):
-			layers.append(block(self.inplanes, planes, self.base_width, self.cardinality, pipeMaskIDs))
+			layers.append(block(self.inplanes, planes, self.base_width, self.cardinality,pipeMaskIds =  pipeMaskIDs))
 			self.allblocks.append(layers[-1])
 
 		return nn.Sequential(*layers)

@@ -53,7 +53,7 @@ class Bottleneck(nn.Module):
 
 		if self.downsample is not None:
 			residual = self.downsample(x)
-
+		print("residual and out shape", residual.shape, out.shape)
 		out += residual
 		out = self.relu(out)
 
@@ -62,7 +62,7 @@ class Bottleneck(nn.Module):
 
 class ResNeXt(nn.Module):
 
-	def __init__(self, block, layers, base_width=4, cardinality=32, num_classes=1000,nodownsample = False):
+	def __init__(self, block, layers, base_width=4, cardinality=32, num_classes=1000, inputChannels = 3,nodownsample = False):
 		self.cardinality = cardinality
 		self.base_width = base_width
 		self.inplanes = 64
@@ -71,7 +71,7 @@ class ResNeXt(nn.Module):
 		global blockID
 		blockID = 1
 
-		self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, #没明白这个conv1是干啥用的
+		self.conv1 = nn.Conv2d(inputChannels, 64, kernel_size=7, stride=2, padding=3, #没明白这个conv1是干啥用的
 							   bias=False)
 		self.bn1 = nn.BatchNorm2d(64)
 		self.relu = nn.ReLU(inplace=True)
@@ -99,7 +99,7 @@ class ResNeXt(nn.Module):
 				m.bias.data.zero_()
 
 	def _make_layer(self, block, planes, blocks, stride=1):
-		downsample = None
+		downsample = None # 这个名字太有迷惑性了，这个是一个调整inplanes和outplaines使得residual可以相加的东西
 		if stride != 1 or self.inplanes != planes * block.expansion:
 			downsample = nn.Sequential(
 				nn.Conv2d(self.inplanes, planes * block.expansion,
