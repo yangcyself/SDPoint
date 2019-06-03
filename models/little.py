@@ -127,7 +127,8 @@ class pipeNet(nn.Module):
         self.cnn5.in_mask = torch.Tensor(mask).cuda()
         count += 1
 
-
+    def setDownSamplingPoint(layer_num):
+        pass
 ModelDebug = False
 
 if __name__ == '__main__':
