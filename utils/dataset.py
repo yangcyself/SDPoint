@@ -95,19 +95,21 @@ class TinyImageNet(data.Dataset):
         root : place holder of the tinyImagenet dataset
         transforms : required transformation of the images
         train / test : getting training set or testing set
-
         """
         if transforms is None:
             self.transforms = T.Compose([
                 T.ToTensor()
                 ])
+        self.pklPath = "tinyImageNet_{}.pkl".format("train" if train else "val")
+        self.pklPath = os.path.join(datasetRoot,self.pklPath)
         if already:
             self.imgs = []
-            if os.path.exists(path=os.path.join(datasetRoot,"tinyImageNet.pkl")):
-                with open(os.path.join(datasetRoot,"tinyImageNet.pkl"),'rb') as load_data:
+            if os.path.exists(path=self.pklPath):
+                with open(self.pklPath,'rb') as load_data:
                     self.imgs, self.labels = pickle.load(load_data)
             for img, label in zip(self.imgs, self.labels):
                 self.breed_dict[label] = img
+                 
         else:
             self.train = train
             self.imgs = []
@@ -119,6 +121,7 @@ class TinyImageNet(data.Dataset):
                 ids = f.read()
             self.classes = ids.split()
             num = 0
+             
             for c in self.classes:
                 self.ids[c] = num
                 num += 1
@@ -147,7 +150,7 @@ class TinyImageNet(data.Dataset):
             
 
     def save(self):
-        with open(os.path.join(datasetRoot,"tinyImageNet.pkl"), 'wb') as save_data:
+        with open(self.pklPath, 'wb') as save_data:
             data_list = [self.imgs, self.labels]
             pickle.dump(data_list, save_data)
 
