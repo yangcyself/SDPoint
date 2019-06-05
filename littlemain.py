@@ -83,7 +83,7 @@ parser.add_argument('-b', '--batch-size', default=16, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('-vb', '--val-batch-size', default=1024, type=int,
                     metavar='N', help='validation mini-batch size (default: 1024)')
-parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
                     metavar='LR', help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
@@ -127,8 +127,8 @@ def main():
     # dataset=DataSet(torch_v=args.torch_version)
     ############### USE MINST AS Dataset #######################
     # channel_num = 1
-    # train_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=True, transform=transforms.ToTensor(),download=True), batch_size=args.batch_size, shuffle=True)
-    # val_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=False, transform=transforms.ToTensor(),download=True), batch_size=args.batch_size, shuffle=True)
+    # train_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=True, transform=transforms.Compose([transforms.Resize(64),transforms.ToTensor()]) ,download=True), batch_size=args.batch_size, shuffle=True)
+    # val_loader = torch.utils.data.DataLoader(dataset=MNIST('~/dataset/Mnist', train=False, transform=transforms.Compose([transforms.Resize(64),transforms.ToTensor()]),download=True), batch_size=args.batch_size, shuffle=True)
     # train_loader = dataset.loader(args.train_path,batch_size = args.batch_size)
     # val_loader = dataset.test_loader(args.test_path,batch_size = args.batch_size)
     ################# USE STANFORD DOGS ########################
@@ -137,8 +137,8 @@ def main():
     # val_loader = torch.utils.data.DataLoader(dataset=StanfordDog(root='~/dataset/standfordDogs/', train=False), batch_size=args.batch_size, shuffle=True)
     ################# Tiny Image Net ########################
     channel_num = 3
-    train_loader = torch.utils.data.DataLoader(dataset=TinyImageNet('~/dataset/tiny-imagenet-200/', train=True), batch_size=args.batch_size, shuffle=True)
-    val_loader = torch.utils.data.DataLoader(dataset=TinyImageNet('~/dataset/tiny-imagenet-200/', train=False), batch_size=args.batch_size, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(dataset=TinyImageNet('/home/ycy/dataset/tiny-imagenet-200/', train=True), batch_size=args.batch_size, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(dataset=TinyImageNet('/home/ycy/dataset/tiny-imagenet-200/', train=False), batch_size=args.batch_size, shuffle=True)
 
 
 
