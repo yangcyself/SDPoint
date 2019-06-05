@@ -116,7 +116,7 @@ class Bottleneck(nn.Module):
 
 class CdsResNeXt(nn.Module):
 
-	def __init__(self, block, layers, base_width=4, cardinality=32, inputChannels = 3,num_classes=1000):
+	def __init__(self, block, layers, base_width=4, cardinality=32, inputChannels = 3,num_classes=1000, dsProbability = 1):
 		self.cardinality = cardinality
 		self.base_width = base_width
 		self.inplanes = 64
@@ -141,6 +141,7 @@ class CdsResNeXt(nn.Module):
 
 		self.blockID = blockID
 		self.size_after_maxpool = None
+		self.dsprobability = dsprobability
 
 		for m in self.modules():
 			if isinstance(m, pipeConv):
@@ -167,8 +168,15 @@ class CdsResNeXt(nn.Module):
 		return nn.Sequential(*layers)
 
 		
+	def randomMask(self,p):
+		for k,v in pipeConv.masks.keys():
+			dim = v.shape[0]
+			pipeConv.masks[k] = torch.Tensor( np.random.binomial(1,p,(dim,)) ).cuda()
 
-	def forward(self, x, blockID=None, ratio=None):
+
+	def forward(self, x):
+		if(self.dsprobability!=1):
+			self.randomMask(self.dsprobability)
 		x = self.conv1(x)
 		x = self.bn1(x)
 		x = self.relu(x)

@@ -143,7 +143,7 @@ def main():
 
 
     #model = pipeNet(100).cuda() # The Second argument of pipenet Changes Channel Wise DS rate
-    model = cdsresnext50(inputChannels = channel_num).cuda()
+    model = cdsresnext50(inputChannels = channel_num, dsProbabilitya = 0.75).cuda()
     # model = resnext50(inputChannels = 1).cuda()
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(model.parameters(),
